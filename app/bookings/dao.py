@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import and_, func, insert, or_, select
+from sqlalchemy import and_, delete, func, insert, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.bookings.models import Bookings
@@ -27,8 +27,7 @@ class BookingDAO(BaseDAO):
         WITH booked_rooms AS (
             SELECT * FROM bookings
             WHERE room_id = 1 AND
-                (date_from >= '2023-05-15' AND date_from <= '2023-06-20') OR
-                (date_from <= '2023-05-15' AND date_to > '2023-05-15')
+                date_from <= '2023-06-20' AND date_to >= '2023-05-15'
         )
         SELECT rooms.quantity - COUNT(booked_rooms.room_id) FROM rooms
         LEFT JOIN booked_rooms ON booked_rooms.room_id = rooms.id
@@ -43,12 +42,8 @@ class BookingDAO(BaseDAO):
                         Bookings.room_id == room_id,
                         or_(
                             and_(
-                                Bookings.date_from >= date_from,
                                 Bookings.date_from <= date_to,
-                            ),
-                            and_(
-                                Bookings.date_from <= date_from,
-                                Bookings.date_to > date_from,
+                                Bookings.date_to >= date_from,
                             ),
                         ),
                     )
@@ -124,3 +119,13 @@ class BookingDAO(BaseDAO):
             }
             print(msg, extra)
             # logger.error(msg, extra=extra, exc_info=True)
+
+    # @classmethod
+    # async def delete(
+    #     cls,
+    #     booking_id: int,
+    # ):
+    #     async with async_session_maker() as session:
+    #         query = delete(Bookings).where(Bookings.id == booking_id)
+    #         await session.execute(query)
+    #         await session.commit()
